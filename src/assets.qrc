@@ -1,0 +1,15 @@
+<RCC>
+    <qresource prefix="/images">
+        <file alias="icon">./assets/images/icon.png</file>
+        <file alias="delete">./assets/images/delete.png</file>
+        <file alias="dot">./assets/images/dot.svg</file>
+        <file alias="manager">./assets/images/manager.png</file>
+        <file alias="manager-active">./assets/images/manager_active.png</file>
+        <file alias="history">./assets/images/history.png</file>
+        <file alias="history-active">./assets/images/history_active.png</file>
+        <file alias="projects">./assets/images/projects.png</file>
+        <file alias="projects-active">./assets/images/projects_active.png</file>
+        <file alias="settings">./assets/images/settings.svg</file>
+        <file alias="settings-active">./assets/images/settings_active.svg</file>
+    </qresource>
+</RCC>

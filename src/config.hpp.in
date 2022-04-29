@@ -1,0 +1,31 @@
+/*
+ * This file is part of the Kitty (https://github.com/TaipaXu/kitty).
+ * Copyright (c) 2022 Taipa Xu.
+ *
+ * Kitty is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Kitty is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Kitty. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+#pragma once
+
+constexpr const char *const PROJECT_NAME = "@PROJECT_NAME@";
+constexpr const char *const ORGANIZATION_DOMAIN = "https://github.com/TaipaXu";
+constexpr const char *const PROJECT_DOMAIN = "https://github.com/TaipaXu/kitty";
+constexpr const char *const PROJECT_ISSUES_DOMAIN = "https://github.com/TaipaXu/kitty/issues";
+constexpr const char *const PROJECT_VERSION = "@PROJECT_VERSION@";
+constexpr const char *const PROJECT_VERSION_MAJOR = "@PROJECT_VERSION_MAJOR@";
+constexpr const char *const PROJECT_VERSION_MINOR = "@PROJECT_VERSION_MINOR@";
+constexpr const char *const PROJECT_VERSION_PATCH = "@PROJECT_VERSION_PATCH@";
+constexpr const char *const DISPLAY_NAME = "Kitty";
+
+constexpr const int REBOOT_CODE = 1000;
