@@ -20,45 +20,14 @@
 
 #include <QWidget>
 
-QT_BEGIN_NAMESPACE
-class QLabel;
-class QMovie;
-class QResizeEvent;
-QT_END_NAMESPACE
-
-namespace Model
-{
-    class Response;
-} // namespace Model
-
 namespace Ui
 {
-    class ResponseSummary;
-    class ResponseHeaders;
-    class ResponseBody;
-
-    class Response : public QWidget
+    class ResponseSummary : public QWidget
     {
         Q_OBJECT
 
     public:
-        explicit Response(QWidget *parent = nullptr);
-        ~Response() = default;
-
-        void setData(const Model::Response &response);
-        void showLoading();
-        void hideLoading();
-
-    protected:
-        void resizeEvent(QResizeEvent *event) override;
-
-    private:
-        ResponseSummary *responseSummary;
-        ResponseHeaders *headers;
-        ResponseBody *body;
-        QWidget *loadingWidget;
-        QLabel *loadingLabel;
-        QMovie *loadingMovie;
-        bool isLoading;
+        explicit ResponseSummary(QWidget *parent = nullptr);
+        ~ResponseSummary();
     };
 } // namespace Ui

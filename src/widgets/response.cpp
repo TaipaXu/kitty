@@ -21,6 +21,7 @@
 #include <QTabWidget>
 #include <QLabel>
 #include <QMovie>
+#include "widgets/responseSummary.hpp"
 #include "widgets/responseHeaders.hpp"
 #include "widgets/responseBody.hpp"
 #include "models/response.hpp"
@@ -35,6 +36,9 @@ namespace Ui
 
         QTabWidget *tabWidget = new QTabWidget(this);
         mainLayout->addWidget(tabWidget);
+
+        responseSummary = new ResponseSummary(tabWidget);
+        tabWidget->addTab(responseSummary, tr("Summary"));
 
         headers = new ResponseHeaders(tabWidget);
         tabWidget->addTab(headers, tr("Headers"));

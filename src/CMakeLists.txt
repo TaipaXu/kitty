@@ -55,6 +55,8 @@ set(SOURCES
         widgets/groupDialog.cpp
         widgets/response.hpp
         widgets/response.cpp
+        widgets/responseSummary.hpp
+        widgets/responseSummary.cpp
         widgets/responseTable.cpp
         widgets/responseHeaders.hpp
         widgets/responseHeaders.cpp
