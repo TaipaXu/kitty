@@ -20,6 +20,11 @@
 
 #include <QWidget>
 
+QT_BEGIN_NAMESPACE
+class QWidget;
+class QLabel;
+QT_END_NAMESPACE
+
 namespace Ui
 {
     class ResponseSummary : public QWidget
@@ -29,5 +34,12 @@ namespace Ui
     public:
         explicit ResponseSummary(QWidget *parent = nullptr);
         ~ResponseSummary();
+
+        void setData(int status, int millseconds);
+
+    private:
+        QWidget *mainWidget;
+        QLabel *statusLabel;
+        QLabel *timeLabel;
     };
 } // namespace Ui

@@ -37,8 +37,8 @@ namespace Ui
         QTabWidget *tabWidget = new QTabWidget(this);
         mainLayout->addWidget(tabWidget);
 
-        responseSummary = new ResponseSummary(tabWidget);
-        tabWidget->addTab(responseSummary, tr("Summary"));
+        summary = new ResponseSummary(tabWidget);
+        tabWidget->addTab(summary, tr("Summary"));
 
         headers = new ResponseHeaders(tabWidget);
         tabWidget->addTab(headers, tr("Headers"));
@@ -70,6 +70,7 @@ namespace Ui
 
     void Response::setData(const Model::Response &response)
     {
+        summary->setData(response.getStatus(), response.getMillseconds());
         headers->setData(response.getHeaders());
         body->setData(response.getBody());
     }

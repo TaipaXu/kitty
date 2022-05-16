@@ -53,7 +53,7 @@ namespace Ui
         void resizeEvent(QResizeEvent *event) override;
 
     private:
-        ResponseSummary *responseSummary;
+        ResponseSummary *summary;
         ResponseHeaders *headers;
         ResponseBody *body;
         QWidget *loadingWidget;
