@@ -19,6 +19,8 @@
 #include "./response.hpp"
 #include <QVBoxLayout>
 #include <QTabWidget>
+#include <QLabel>
+#include <QMovie>
 #include "widgets/responseHeaders.hpp"
 #include "widgets/responseBody.hpp"
 #include "models/response.hpp"
@@ -26,7 +28,7 @@
 namespace Ui
 {
     Response::Response(QWidget *parent)
-        : QWidget(parent), headers{nullptr}, body{nullptr}
+        : QWidget(parent), headers{nullptr}, body{nullptr}, isLoading{false}
     {
         QVBoxLayout *mainLayout = new QVBoxLayout();
         mainLayout->setContentsMargins(0, 0, 0, 0);
@@ -41,11 +43,60 @@ namespace Ui
         tabWidget->addTab(body, tr("Body"));
 
         setLayout(mainLayout);
+
+        QVBoxLayout *loadingLayout = new QVBoxLayout();
+        loadingLayout->setAlignment(Qt::AlignCenter);
+        loadingWidget = new QWidget(this);
+        loadingWidget->setLayout(loadingLayout);
+        loadingWidget->hide();
+        loadingWidget->setFixedSize(size());
+        loadingWidget->setStyleSheet("background-color: rgba(0, 0, 0, 0.6);");
+
+        loadingMovie = new QMovie(this);
+        loadingMovie->setFileName(":/images/loading");
+        loadingMovie->setScaledSize({30, 30});
+
+        loadingLabel = new QLabel(this);
+        loadingLabel->setMovie(loadingMovie);
+        loadingLabel->setFixedSize({30, 30});
+        loadingLabel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+        loadingLabel->setAlignment(Qt::AlignCenter);
+        loadingLayout->addWidget(loadingLabel);
     }
 
     void Response::setData(const Model::Response &response)
     {
         headers->setData(response.getHeaders());
         body->setData(response.getBody());
+    }
+
+    void Response::showLoading()
+    {
+        isLoading = true;
+        loadingMovie->start();
+        loadingWidget->setFixedSize(size());
+        loadingWidget->show();
+        loadingWidget->raise();
+
+        update();
+    }
+
+    void Response::hideLoading()
+    {
+        isLoading = false;
+        loadingMovie->stop();
+        setDisabled(false);
+        loadingWidget->hide();
+        loadingWidget->lower();
+
+        update();
+    }
+
+    void Response::resizeEvent(QResizeEvent *event)
+    {
+        if (isLoading)
+        {
+            loadingWidget->setFixedSize(size());
+        }
     }
 } // namespace Ui

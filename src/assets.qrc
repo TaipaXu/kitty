@@ -11,5 +11,6 @@
         <file alias="projects-active">./assets/images/projects_active.png</file>
         <file alias="settings">./assets/images/settings.svg</file>
         <file alias="settings-active">./assets/images/settings_active.svg</file>
+        <file alias="loading">./assets/images/loading.gif</file>
     </qresource>
 </RCC>

@@ -96,6 +96,7 @@ namespace Ui
     void Api::handleFoundResponse(const Model::Response &response)
     {
         this->response->setData(response);
+        this->response->hideLoading();
         isRequestting = false;
     }
 
@@ -105,6 +106,8 @@ namespace Ui
         {
             return;
         }
+
+        response->showLoading();
 
         isRequestting = true;
         if (network == nullptr)

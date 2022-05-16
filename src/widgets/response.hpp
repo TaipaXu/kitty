@@ -20,6 +20,12 @@
 
 #include <QWidget>
 
+QT_BEGIN_NAMESPACE
+class QLabel;
+class QMovie;
+class QResizeEvent;
+QT_END_NAMESPACE
+
 namespace Model
 {
     class Response;
@@ -39,9 +45,18 @@ namespace Ui
         ~Response() = default;
 
         void setData(const Model::Response &response);
+        void showLoading();
+        void hideLoading();
+
+    protected:
+        void resizeEvent(QResizeEvent *event) override;
 
     private:
         ResponseHeaders *headers;
         ResponseBody *body;
+        QWidget *loadingWidget;
+        QLabel *loadingLabel;
+        QMovie *loadingMovie;
+        bool isLoading;
     };
 } // namespace Ui
