@@ -1,5 +1,12 @@
 find_package(QT NAMES Qt6 COMPONENTS Widgets REQUIRED)
 find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Widgets Network REQUIRED)
+find_package(Threads)
+
+set( CURL_LIBRARY ${CMAKE_SOURCE_DIR}/3rd/curl/build/lib )
+set( CURL_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/3rd/curl/include )
+
+include_directories( ${CURL_INCLUDE_DIR} )
+link_directories( ${CURL_LIBRARY} )
 
 configure_file(./config.hpp.in ./config.hpp)
 
@@ -129,4 +136,9 @@ add_executable(
     ${SOURCES}
 )
 
-target_link_libraries(${TARGET} Qt${QT_VERSION_MAJOR}::Core Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Network)
+target_link_libraries(${TARGET}
+    Qt${QT_VERSION_MAJOR}::Core
+    Qt${QT_VERSION_MAJOR}::Widgets
+    Qt${QT_VERSION_MAJOR}::Network
+    ${CMAKE_THREAD_LIBS_INIT}
+    curl)
