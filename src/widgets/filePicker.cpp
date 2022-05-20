@@ -44,9 +44,8 @@ namespace Ui
         const QUrl url = QFileDialog::getOpenFileUrl(this, tr("Select File"));
         if (!url.isEmpty())
         {
-            const QString fileName = url.fileName();
-            setText(fileName);
-            filePath = fileName;
+            filePath = url.path();
+            setText(filePath);
             emit filePicked(filePath);
         }
     }

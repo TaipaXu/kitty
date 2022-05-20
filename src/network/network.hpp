@@ -25,6 +25,8 @@ class QNetworkReply;
 class QElapsedTimer;
 QT_END_NAMESPACE
 
+typedef void CURL;
+
 namespace Model
 {
     class Response;
@@ -53,8 +55,9 @@ private slots:
     void handleResult(QNetworkReply *reply);
 
 private:
-    QNetworkAccessManager *manager;
-    QNetworkReply *reply;
+    // QNetworkAccessManager *manager;
+    // QNetworkReply *reply;
+    CURL *curl;
     bool isGoing;
-    QElapsedTimer *timer;
+    // QElapsedTimer *timer;
 };

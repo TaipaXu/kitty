@@ -19,6 +19,10 @@
 #include "core.hpp"
 #include <QApplication>
 #include <QTranslator>
+extern "C"
+{
+#include <curl/curl.h>
+}
 #include "config.hpp"
 #include "widgets/mainWindow.hpp"
 #include "models/language.hpp"
@@ -34,12 +38,16 @@ Core::Core(QObject *parent)
 
     mainWindow = new Ui::MainWindow();
     mainWindow->show();
+
+    curl_global_init(CURL_GLOBAL_ALL);
 }
 
 Core::~Core()
 {
     mainWindow->deleteLater();
     mainWindow = nullptr;
+
+    curl_global_cleanup();
 }
 
 void Core::handleSettingsChanged() const

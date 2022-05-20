@@ -21,7 +21,12 @@
 #include <QJsonDocument>
 #include <QJsonParseError>
 #include <QElapsedTimer>
+#include <QMimeDatabase>
 #include <list>
+extern "C"
+{
+#include <curl/curl.h>
+}
 #include "models/api.hpp"
 #include "models/param.hpp"
 #include "models/header.hpp"
@@ -33,75 +38,126 @@
 #include "models/binary.hpp"
 #include "models/response.hpp"
 
-Network::Network(QObject *parent)
-    : QObject{parent}, manager{nullptr}, reply{nullptr}, isGoing{false}
+size_t receiveData(void *contents, size_t size, size_t nmemb, std::string *userdata)
 {
-    timer = new QElapsedTimer();
+    size_t newLength = size * nmemb;
+    try
+    {
+        userdata->append(( char * )contents, newLength);
+    }
+    catch (std::bad_alloc &e)
+    {
+        return 0;
+    }
+    return newLength;
+}
+
+Network::Network(QObject *parent)
+    : QObject{parent}, curl{nullptr}, isGoing{false}
+{
 }
 
 Network::~Network()
 {
-    delete timer;
+    if (curl)
+    {
+        curl_easy_cleanup(curl);
+    }
 }
 
 void Network::request(Model::Api *api)
 {
-    isGoing = true;
-    if (reply)
+    if (!curl)
     {
-        reply->abort();
-        reply = nullptr;
+        curl = curl_easy_init();
+    }
+    else
+    {
+        curl_easy_reset(curl);
     }
 
-    if (!manager)
-    {
-        manager = new QNetworkAccessManager(this);
-        connect(manager, &QNetworkAccessManager::finished, this, &Network::handleResult);
-    }
-
-    QNetworkRequest request;
     QUrl url(api->getUrl());
     QUrlQuery query;
-    std::list<Model::Param *> params = api->getParams();
-    for (auto &&param : params)
+    for (auto &&param : api->getParams())
     {
         query.addQueryItem(param->getKey(), param->getValue());
     }
     url.setQuery(query);
-    request.setUrl(url);
+    curl_easy_setopt(curl, CURLOPT_URL, url.toEncoded().data());
 
-    std::list<Model::Header *> headers = api->getHeaders();
-    for (auto &&header : headers)
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, receiveData);
+    std::string responseHeadersStr;
+    curl_easy_setopt(curl, CURLOPT_HEADERDATA, &responseHeadersStr);
+    std::string responseContent;
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &responseContent);
+
+    struct curl_slist *headers = nullptr;
+    for (auto &&header : api->getHeaders())
     {
-        request.setRawHeader(header->getKey().toUtf8(), header->getValue().toUtf8());
+        headers = curl_slist_append(headers, QString("%1: %2").arg(header->getKey()).arg(header->getValue()).toStdString().c_str());
     }
 
-    Model::Method method = api->getMethod();
-    if (method == Model::Method::GET || method == Model::Method::HEAD || method == Model::Method::DELETE || method == Model::Method::CONNECT || method == Model::Method::OPTIONS || method == Model::Method::TRACE)
+    const Model::Method method = api->getMethod();
+    switch (method)
     {
-        timer->start();
-        reply = manager->get(request);
+    case Model::Method::GET:
+    {
+        curl_easy_setopt(curl, CURLOPT_NOBODY, 0L);
+        curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, nullptr);
+        curl_easy_setopt(curl, CURLOPT_HTTPGET, 1L);
+
+        curl_easy_perform(curl);
+        break;
     }
-    else
+
+    case Model::Method::POST:
+    case Model::Method::PUT:
+    case Model::Method::PATCH:
     {
+        curl_easy_setopt(curl, CURLOPT_NOBODY, 0L);
+        curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, nullptr);
+
+        switch (method)
+        {
+        case Model::Method::POST:
+        {
+            curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "POST");
+
+            break;
+        }
+
+        case Model::Method::PUT:
+        {
+            curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PUT");
+
+            break;
+        }
+
+        case Model::Method::PATCH:
+        {
+            curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PATCH");
+
+            break;
+        }
+
+        default:
+            break;
+        }
+
         switch (api->getBody()->getType())
         {
         case Model::Body::Type::None:
         {
-            QByteArray data;
-            timer->start();
-            reply = manager->post(request, data);
+            curl_easy_perform(curl);
 
             break;
         }
 
         case Model::Body::Type::FormData:
         {
-            // request.setHeader(QNetworkRequest::ContentTypeHeader, "multipart/form-data");
-
-            QHttpMultiPart *multiPart = new QHttpMultiPart(QHttpMultiPart::FormDataType);
-            const std::list<Model::FormData *> formDatas = api->getBody()->getFormDatas();
-            for (auto &&formData : formDatas)
+            curl_httppost *post = nullptr;
+            curl_httppost *last = nullptr;
+            for (auto &&formData : api->getBody()->getFormDatas())
             {
                 if (!formData->getEnabled())
                 {
@@ -111,107 +167,117 @@ void Network::request(Model::Api *api)
                 const Model::FormData::Type type = formData->getType();
                 if (type == Model::FormData::Type::Text)
                 {
-                    QHttpPart requestPart;
-                    requestPart.setHeader(QNetworkRequest::ContentTypeHeader, QVariant("text/plain"));
-                    const QString header = QString("form-data; name=\"%1\"").arg(formData->getKey());
-                    requestPart.setHeader(QNetworkRequest::ContentDispositionHeader, QVariant(header));
-                    requestPart.setBody(formData->getValue().toUtf8());
-                    multiPart->append(requestPart);
+                    curl_formadd(&post, &last, CURLFORM_COPYNAME, formData->getKey().toStdString().c_str(), CURLFORM_COPYCONTENTS, formData->getValue().toStdString().c_str(), CURLFORM_END);
                 }
                 else if (type == Model::FormData::Type::File)
                 {
-                    QHttpPart requestPart;
-                    const QString header = QString("form-data; name=\"%1\"").arg(formData->getKey());
-                    // TODO
-                    // requestPart.setHeader(QNetworkRequest::ContentTypeHeader, QVariant("image/jpeg"));
-                    requestPart.setHeader(QNetworkRequest::ContentDispositionHeader, QVariant(header));
-                    QFile *file = new QFile(formData->getValue());
-                    file->open(QIODevice::ReadOnly);
-                    requestPart.setBodyDevice(file);
-                    multiPart->append(requestPart);
+                    curl_formadd(&post,
+                                 &last,
+                                 CURLFORM_COPYNAME, formData->getKey().toStdString().c_str(),
+                                 CURLFORM_FILE, formData->getValue().toStdString().c_str(),
+                                 CURLFORM_CONTENTTYPE, QMimeDatabase().mimeTypeForFile(formData->getValue()).name().toStdString().c_str(),
+                                 CURLFORM_END);
                 }
             }
-            timer->start();
-            reply = manager->post(request, multiPart);
+            curl_easy_setopt(curl, CURLOPT_HTTPPOST, post);
+            curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+
+            curl_easy_perform(curl);
+
+            curl_formfree(post);
 
             break;
         }
 
         case Model::Body::Type::XWwwFormUrlEncoded:
         {
-            request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
-            QUrlQuery postData;
-            std::list<Model::XWwwFormUrlEncoded *> xWwwFormUrlEncodeds = api->getBody()->getXWwwFormUrlEncodeds();
-            for (auto &&xWwwFormUrlEncoded : xWwwFormUrlEncodeds)
+            std::string content;
+            for (auto &&xWwwFormUrlEncoded : api->getBody()->getXWwwFormUrlEncodeds())
             {
                 if (!xWwwFormUrlEncoded->getEnabled())
                 {
                     continue;
                 }
 
-                postData.addQueryItem(xWwwFormUrlEncoded->getKey(), xWwwFormUrlEncoded->getValue());
+                if (!content.empty())
+                {
+                    content += "&";
+                }
+                content += QString("%1=%2").arg(xWwwFormUrlEncoded->getKey()).arg(xWwwFormUrlEncoded->getValue()).toStdString();
             }
 
-            timer->start();
-            reply = manager->post(request, postData.toString().toUtf8());
+            curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE_LARGE, static_cast<curl_off_t>(content.length()));
+            curl_easy_setopt(curl, CURLOPT_COPYPOSTFIELDS, content.c_str());
+            curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+
+            curl_easy_perform(curl);
+
             break;
         }
 
         case Model::Body::Type::Raw:
         {
             Model::Raw *raw = api->getBody()->getRaw();
+            const std::string content = raw->getData().toStdString();
+            curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE_LARGE, static_cast<curl_off_t>(content.length()));
+            curl_easy_setopt(curl, CURLOPT_COPYPOSTFIELDS, content.c_str());
+
+            std::string contentTypeHeader;
             switch (raw->getType())
             {
             case Model::Raw::Type::Text:
             {
-                request.setHeader(QNetworkRequest::ContentTypeHeader, "text/plain");
+                contentTypeHeader = "Content-Type: text/plain";
                 break;
             }
 
             case Model::Raw::Type::JavaScript:
             {
-                request.setHeader(QNetworkRequest::ContentTypeHeader, "application/javascript");
+                contentTypeHeader = "Content-Type: application/javascript";
                 break;
             }
 
             case Model::Raw::Type::Json:
             {
-                request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+                contentTypeHeader = "Content-Type: application/json";
                 break;
             }
 
             case Model::Raw::Type::Html:
             {
-                request.setHeader(QNetworkRequest::ContentTypeHeader, "text/html");
+                contentTypeHeader = "Content-Type: text/html";
                 break;
             }
 
             case Model::Raw::Type::Xml:
             {
-                request.setHeader(QNetworkRequest::ContentTypeHeader, "application/xml");
+                contentTypeHeader = "Content-Type: application/xml";
                 break;
             }
 
             default:
                 break;
             }
+            headers = curl_slist_append(headers, contentTypeHeader.c_str());
+            curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
 
-            timer->start();
-            reply = manager->post(request, raw->getData().toUtf8());
+            curl_easy_perform(curl);
 
             break;
         }
 
         case Model::Body::Type::Binary:
         {
-            request.setHeader(QNetworkRequest::ContentTypeHeader, "application/octet-stream");
+            QFile file(api->getBody()->getBinary()->getPath());
+            if (!file.open(QIODevice::ReadOnly))
+                return;
+            QByteArray data = file.readAll();
+            curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE_LARGE, static_cast<curl_off_t>(data.length()));
+            curl_easy_setopt(curl, CURLOPT_COPYPOSTFIELDS, data.data());
+            headers = curl_slist_append(headers, "Content-Type: application/octet-stream");
+            curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
 
-            QFile *compressedFile = new QFile(api->getBody()->getBinary()->getPath());
-            compressedFile->open(QIODevice::ReadOnly);
-
-            timer->start();
-            reply = manager->post(request, compressedFile);
-            compressedFile->setParent(reply);
+            curl_easy_perform(curl);
 
             break;
         }
@@ -219,38 +285,78 @@ void Network::request(Model::Api *api)
         default:
             break;
         }
+
+        break;
     }
+
+    case Model::Method::HEAD:
+    {
+        curl_easy_setopt(curl, CURLOPT_NOBODY, 1L);
+        curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, nullptr);
+
+        curl_easy_perform(curl);
+        break;
+    }
+
+    case Model::Method::DELETE:
+    {
+        curl_easy_setopt(curl, CURLOPT_HTTPGET, 0L);
+        curl_easy_setopt(curl, CURLOPT_NOBODY, 0L);
+        curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
+
+        curl_easy_perform(curl);
+        break;
+    }
+
+    case Model::Method::OPTIONS:
+    {
+        curl_easy_setopt(curl, CURLOPT_NOBODY, 0L);
+        curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "OPTIONS");
+
+        curl_easy_perform(curl);
+        break;
+    }
+
+        // case Model::Method::TRACE:
+        // {
+        // }
+
+    default:
+        break;
+    }
+
+    long responsecode;
+    double elapsed;
+    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &responsecode);
+    curl_easy_getinfo(curl, CURLINFO_TOTAL_TIME, &elapsed);
+
+    Model::Response response;
+    response.setStatus(responsecode);
+    for (auto &&i : QString::fromStdString(responseHeadersStr).split("\r\n"))
+    {
+        if (i.contains(":"))
+        {
+            auto &&header = i.split(":");
+            const QString key = header[0].trimmed();
+            const QString value = header[1].trimmed();
+            response.addHeader(Model::Response::Header{key, value});
+        }
+    }
+    response.setMillseconds(elapsed * 1000);
+    response.setBody(QString::fromStdString(responseContent));
+    emit foundResponse(response);
+
+    curl_slist_free_all(headers);
 }
 
 void Network::cancel()
 {
     if (isGoing)
     {
-        reply->abort();
-        // reply->close();
-        reply = nullptr;
     }
 }
 
 void Network::handleResult(QNetworkReply *reply)
 {
     isGoing = false;
-
-    QVariant statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute);
-
-    Model::Response response;
-    response.setStatus(statusCode.toInt());
-    response.setMillseconds(timer->elapsed());
-    for (auto &&i : reply->rawHeaderPairs())
-    {
-        response.addHeader(Model::Response::Header{i.first, i.second});
-    }
-
-    const QString content = reply->readAll();
-    response.setBody(content);
-    emit foundResponse(response);
-
-    reply->deleteLater();
-    reply = nullptr;
-    this->reply = nullptr;
 }

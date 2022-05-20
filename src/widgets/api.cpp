@@ -23,6 +23,7 @@
 #include <QComboBox>
 #include <QLineEdit>
 #include <QPushButton>
+#include <thread>
 #include "models/api.hpp"
 #include "models/method.hpp"
 #include "widgets/request.hpp"
@@ -113,9 +114,13 @@ namespace Ui
         if (network == nullptr)
         {
             network = new Network(this);
-            connect(network, &Network::foundResponse, this, &Api::handleFoundResponse);
+            connect(network, &Network::foundResponse, this, &Api::handleFoundResponse, Qt::BlockingQueuedConnection);
         }
-        network->request(api);
+
+        std::thread t([this]() {
+            network->request(api);
+        });
+        t.detach();
     }
 
     bool Api::isChanged() const
