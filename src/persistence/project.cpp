@@ -210,7 +210,6 @@ namespace Persistence
         if (!document.isNull() && jsonError.error == QJsonParseError::NoError)
         {
             QJsonObject apiObject = document.object();
-            const QString apiId = apiId;
             const QString apiName = api->getName();
             const QString apiUrl = apiObject["url"].toString();
             const QString apiMethodStr = apiObject["method"].toString();
