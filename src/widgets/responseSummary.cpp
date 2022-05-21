@@ -32,9 +32,19 @@ namespace Ui
         QFormLayout *formLayout = new QFormLayout();
         formLayout->setContentsMargins(0, 0, 0, 0);
         statusLabel = new QLabel("", this);
-        timeLabel = new QLabel("", this);
         formLayout->addRow(tr("Status"), statusLabel);
-        formLayout->addRow(tr("Time"), timeLabel);
+        totalTimeLabel = new QLabel("", this);
+        formLayout->addRow(tr("Total Time"), totalTimeLabel);
+        dnsLookupTimeLabel = new QLabel("", this);
+        formLayout->addRow(tr("DNS Lookup"), dnsLookupTimeLabel);
+        tcpHandshakeTimeLabel = new QLabel("", this);
+        formLayout->addRow(tr("TCP Handshake"), tcpHandshakeTimeLabel);
+        sslHandshakeTimeLabel = new QLabel("", this);
+        formLayout->addRow(tr("SSL Handshake"), sslHandshakeTimeLabel);
+        transferStartTimeLabel = new QLabel("", this);
+        formLayout->addRow(tr("Transfer Start"), transferStartTimeLabel);
+        downloadTimeLabel = new QLabel("", this);
+        formLayout->addRow(tr("Download"), downloadTimeLabel);
         mainWidget->setLayout(formLayout);
 
         mainLayout->addWidget(mainWidget);
@@ -48,10 +58,15 @@ namespace Ui
     {
     }
 
-    void ResponseSummary::setData(int status, int millseconds)
+    void ResponseSummary::setData(int status, double totalTime, double dnsLookupTime, double tcpHandshakeTime, double sslHandshakeTime, double transferStartTime, double downloadTime)
     {
         statusLabel->setText(QString::number(status));
-        timeLabel->setText(QStringLiteral("%1ms").arg(millseconds));
+        totalTimeLabel->setText(QStringLiteral("%1 ms").arg(totalTime));
+        dnsLookupTimeLabel->setText(QStringLiteral("%1 ms").arg(dnsLookupTime));
+        tcpHandshakeTimeLabel->setText(QStringLiteral("%1 ms").arg(tcpHandshakeTime));
+        sslHandshakeTimeLabel->setText(QStringLiteral("%1 ms").arg(sslHandshakeTime));
+        transferStartTimeLabel->setText(QStringLiteral("%1 ms").arg(transferStartTime));
+        downloadTimeLabel->setText(QStringLiteral("%1 ms").arg(downloadTime));
 
         if (status >= 200 && status < 300)
         {

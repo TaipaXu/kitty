@@ -38,8 +38,18 @@ namespace Model
 
         int getStatus() const;
         void setStatus(int status);
-        int getMillseconds() const;
-        void setMillseconds(int millseconds);
+        double getTotalTime() const;
+        void setTotalTime(double time);
+        double getDnsLookupTime() const;
+        void setDnsLookupTime(double time);
+        double getTcpHandshakeTime() const;
+        void setTcpHandshakeTime(double time);
+        double getSslHandshakeTime() const;
+        void setSslHandshakeTime(double time);
+        double getTransferStartTime() const;
+        void setTransferStartTime(double time);
+        double getDownloadTime() const;
+        void setDownloadTime(double time);
         const std::list<Header> getHeaders() const;
         void addHeader(Header header);
         QString getBody() const;
@@ -47,7 +57,12 @@ namespace Model
 
     private:
         int status;
-        int millseconds;
+        double totalTime;
+        double dnsLookupTime;
+        double tcpHandshakeTime;
+        double sslHandshakeTime;
+        double transferStartTime;
+        double downloadTime;
         std::list<Header> headers;
         QString body;
     };

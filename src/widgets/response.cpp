@@ -70,7 +70,8 @@ namespace Ui
 
     void Response::setData(const Model::Response &response)
     {
-        summary->setData(response.getStatus(), response.getMillseconds());
+        summary->setData(response.getStatus(), response.getTotalTime(), response.getDnsLookupTime(),
+                         response.getTcpHandshakeTime(), response.getSslHandshakeTime(), response.getTransferStartTime(), response.getDownloadTime());
         headers->setData(response.getHeaders());
         body->setData(response.getBody());
     }

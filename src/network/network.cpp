@@ -326,9 +326,28 @@ void Network::request(Model::Api *api)
     }
 
     long responsecode;
-    double elapsed;
+    double totalTime;
     curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &responsecode);
-    curl_easy_getinfo(curl, CURLINFO_TOTAL_TIME, &elapsed);
+    curl_easy_getinfo(curl, CURLINFO_TOTAL_TIME, &totalTime);
+
+    double nameLookupTime;
+    curl_easy_getinfo(curl, CURLINFO_NAMELOOKUP_TIME, &nameLookupTime);
+    double connectTime;
+    curl_easy_getinfo(curl, CURLINFO_CONNECT_TIME, &connectTime);
+    double appConnectTime;
+    curl_easy_getinfo(curl, CURLINFO_APPCONNECT_TIME, &appConnectTime);
+    double pretransferTime;
+    curl_easy_getinfo(curl, CURLINFO_PRETRANSFER_TIME, &pretransferTime);
+    double startTransferTime;
+    curl_easy_getinfo(curl, CURLINFO_STARTTRANSFER_TIME, &startTransferTime);
+    double redirectTime;
+    curl_easy_getinfo(curl, CURLINFO_REDIRECT_TIME, &redirectTime);
+
+    double dnsLookupTime = nameLookupTime * 1000;
+    double tcpHandshakeTime = (connectTime - nameLookupTime) * 1000;
+    double sslHandshakeTime = (appConnectTime - connectTime) * 1000;
+    double transferStartTime = (startTransferTime - pretransferTime) * 1000;
+    double downloadTime = (totalTime - startTransferTime) * 1000;
 
     Model::Response response;
     response.setStatus(responsecode);
@@ -342,7 +361,12 @@ void Network::request(Model::Api *api)
             response.addHeader(Model::Response::Header{key, value});
         }
     }
-    response.setMillseconds(elapsed * 1000);
+    response.setTotalTime(totalTime * 1000);
+    response.setDnsLookupTime(dnsLookupTime);
+    response.setTcpHandshakeTime(tcpHandshakeTime);
+    response.setSslHandshakeTime(sslHandshakeTime);
+    response.setTransferStartTime(transferStartTime);
+    response.setDownloadTime(downloadTime);
     response.setBody(QString::fromStdString(responseContent));
     emit foundResponse(response);
 

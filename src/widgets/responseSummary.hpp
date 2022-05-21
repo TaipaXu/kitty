@@ -35,11 +35,16 @@ namespace Ui
         explicit ResponseSummary(QWidget *parent = nullptr);
         ~ResponseSummary();
 
-        void setData(int status, int millseconds);
+        void setData(int status, double totalTime, double dnsLookupTime, double tcpHandshakeTime, double sslHandshakeTime, double transferStartTime, double downloadTime);
 
     private:
         QWidget *mainWidget;
         QLabel *statusLabel;
-        QLabel *timeLabel;
+        QLabel *totalTimeLabel;
+        QLabel *dnsLookupTimeLabel;
+        QLabel *tcpHandshakeTimeLabel;
+        QLabel *sslHandshakeTimeLabel;
+        QLabel *transferStartTimeLabel;
+        QLabel *downloadTimeLabel;
     };
 } // namespace Ui

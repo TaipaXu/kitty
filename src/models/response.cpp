@@ -30,14 +30,64 @@ namespace Model
         this->status = status;
     }
 
-    int Response::getMillseconds() const
+    double Response::getTotalTime() const
     {
-        return millseconds;
+        return totalTime;
     }
 
-    void Response::setMillseconds(int millseconds)
+    void Response::setTotalTime(double time)
     {
-        this->millseconds = millseconds;
+        this->totalTime = time;
+    }
+
+    double Response::getDnsLookupTime() const
+    {
+        return dnsLookupTime;
+    }
+
+    void Response::setDnsLookupTime(double time)
+    {
+        this->dnsLookupTime = time;
+    }
+
+    double Response::getTcpHandshakeTime() const
+    {
+        return tcpHandshakeTime;
+    }
+
+    void Response::setTcpHandshakeTime(double time)
+    {
+        this->tcpHandshakeTime = time;
+    }
+
+    double Response::getSslHandshakeTime() const
+    {
+        return sslHandshakeTime;
+    }
+
+    void Response::setSslHandshakeTime(double time)
+    {
+        this->sslHandshakeTime = time;
+    }
+
+    double Response::getTransferStartTime() const
+    {
+        return transferStartTime;
+    }
+
+    void Response::setTransferStartTime(double time)
+    {
+        this->transferStartTime = time;
+    }
+
+    double Response::getDownloadTime() const
+    {
+        return downloadTime;
+    }
+
+    void Response::setDownloadTime(double time)
+    {
+        this->downloadTime = time;
     }
 
     const std::list<Response::Header> Response::getHeaders() const
