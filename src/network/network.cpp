@@ -37,6 +37,7 @@ extern "C"
 #include "models/raw.hpp"
 #include "models/binary.hpp"
 #include "models/response.hpp"
+#include "persistence/apiSettings.hpp"
 
 size_t receiveData(void *contents, size_t size, size_t nmemb, std::string *userdata)
 {
@@ -84,6 +85,9 @@ void Network::request(Model::Api *api)
     }
     url.setQuery(query);
     curl_easy_setopt(curl, CURLOPT_URL, url.toEncoded().data());
+
+    Persistence::ApiSettings *apiSettings = Persistence::ApiSettings::getInstance();
+    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, apiSettings->getAutoFollowRedirects() ? 1L : 0L);
 
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, receiveData);
     std::string responseHeadersStr;
