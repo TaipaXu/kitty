@@ -135,6 +135,7 @@ namespace Ui
             managerNav->setStatus(true);
             projectsNav->setStatus(false);
             historiesNav->setStatus(false);
+            settingsNav->setStatus(false);
 
             emit managerActived();
         }
@@ -148,6 +149,7 @@ namespace Ui
             managerNav->setStatus(false);
             projectsNav->setStatus(true);
             historiesNav->setStatus(false);
+            settingsNav->setStatus(false);
 
             emit projectsActived();
         }
@@ -161,6 +163,7 @@ namespace Ui
             managerNav->setStatus(false);
             projectsNav->setStatus(false);
             historiesNav->setStatus(true);
+            settingsNav->setStatus(false);
 
             emit historiesActived();
         }
@@ -168,6 +171,15 @@ namespace Ui
 
     void Nav::handleSettingsNavClicked()
     {
-        emit settingsActived();
+        if (enableStatuses[Status::Settings] && status != Status::Settings)
+        {
+            status = Status::Settings;
+            managerNav->setStatus(false);
+            projectsNav->setStatus(false);
+            historiesNav->setStatus(false);
+            settingsNav->setStatus(true);
+
+            emit settingsActived();
+        }
     }
 } // namespace Ui
