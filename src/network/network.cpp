@@ -89,6 +89,7 @@ void Network::request(Model::Api *api)
     Persistence::ApiSettings *apiSettings = Persistence::ApiSettings::getInstance();
     curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, apiSettings->getAutoFollowRedirects() ? 1L : 0L);
     curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, apiSettings->getEnableSslVerification() ? 1L : 0L);
+    curl_easy_setopt(curl, CURLOPT_TIMEOUT, apiSettings->getTimeout());
 
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, receiveData);
     std::string responseHeadersStr;

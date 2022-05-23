@@ -38,6 +38,7 @@ namespace Ui
     private slots:
         void handleAutoFollowRedirectsChanged(bool checked);
         void handleEnableSslVerificationChanged(bool checked);
+        void handleTimeoutChanged(const QString &text);
 
     private:
         Persistence::ApiSettings *settings;

@@ -56,9 +56,21 @@ namespace Persistence
         settings->setValue("enableSslVerification", enableSslVerification);
     }
 
+    int ApiSettings::getTimeout() const
+    {
+        return timeout;
+    }
+
+    void ApiSettings::setTimeout(int timeout)
+    {
+        this->timeout = timeout;
+        settings->setValue("timeout", timeout);
+    }
+
     void ApiSettings::readSettings()
     {
         autoFollowRedirects = settings->value("autoFollowRedirects", true).toBool();
         enableSslVerification = settings->value("enableSslVerification", true).toBool();
+        timeout = settings->value("timeout", 50).toInt();
     }
 } // namespace Persistence

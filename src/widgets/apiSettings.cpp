@@ -22,6 +22,8 @@
 #include <QTabWidget>
 #include <QLabel>
 #include <QCheckBox>
+#include <QLineEdit>
+#include <QIntValidator>
 #include "persistence/apiSettings.hpp"
 
 namespace Ui
@@ -54,6 +56,19 @@ namespace Ui
         hLayout->addWidget(enableSslVerificationCheckBox);
         mainLayout->addLayout(hLayout);
 
+        hLayout = new QHBoxLayout();
+        QLabel *timeoutLabel = new QLabel(tr("Timeout / s"), this);
+        QLineEdit *timeoutInput = new QLineEdit(this);
+        timeoutInput->setFixedWidth(50);
+        timeoutInput->setValidator(new QIntValidator(0, 300, this));
+        timeoutInput->setText(QString::number(settings->getTimeout()));
+        connect(timeoutInput, &QLineEdit::textChanged, this, &ApiSettings::handleTimeoutChanged);
+        spacer = new QSpacerItem(20, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
+        hLayout->addWidget(timeoutLabel);
+        hLayout->addItem(spacer);
+        hLayout->addWidget(timeoutInput);
+        mainLayout->addLayout(hLayout);
+
         setLayout(mainLayout);
     }
 
@@ -69,5 +84,10 @@ namespace Ui
     void ApiSettings::handleEnableSslVerificationChanged(bool checked)
     {
         settings->setEnableSslVerification(checked);
+    }
+
+    void ApiSettings::handleTimeoutChanged(const QString &text)
+    {
+        settings->setTimeout(text.toInt());
     }
 } // namespace Ui
