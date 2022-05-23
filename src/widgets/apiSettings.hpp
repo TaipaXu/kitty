@@ -36,7 +36,8 @@ namespace Ui
         ~ApiSettings();
 
     private slots:
-        void handleFollowAutoRedirectsChanged(bool checked);
+        void handleAutoFollowRedirectsChanged(bool checked);
+        void handleEnableSslVerificationChanged(bool checked);
 
     private:
         Persistence::ApiSettings *settings;

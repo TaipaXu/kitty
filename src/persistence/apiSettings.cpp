@@ -45,8 +45,20 @@ namespace Persistence
         settings->setValue("autoFollowRedirects", autoFollowRedirects);
     }
 
+    bool ApiSettings::getEnableSslVerification() const
+    {
+        return enableSslVerification;
+    }
+
+    void ApiSettings::setEnableSslVerification(bool enableSslVerification)
+    {
+        this->enableSslVerification = enableSslVerification;
+        settings->setValue("enableSslVerification", enableSslVerification);
+    }
+
     void ApiSettings::readSettings()
     {
         autoFollowRedirects = settings->value("autoFollowRedirects", true).toBool();
+        enableSslVerification = settings->value("enableSslVerification", true).toBool();
     }
 } // namespace Persistence

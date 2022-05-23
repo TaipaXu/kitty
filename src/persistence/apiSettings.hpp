@@ -44,6 +44,8 @@ namespace Persistence
     public:
         bool getAutoFollowRedirects() const;
         void setAutoFollowRedirects(bool autoFollowRedirects);
+        bool getEnableSslVerification() const;
+        void setEnableSslVerification(bool enableSslVerification);
 
     private:
         ApiSettings();
@@ -52,5 +54,6 @@ namespace Persistence
     private:
         QSettings *settings;
         bool autoFollowRedirects;
+        bool enableSslVerification;
     };
 } // namespace Persistence

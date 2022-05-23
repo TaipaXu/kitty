@@ -33,16 +33,25 @@ namespace Ui
         mainLayout->setAlignment(Qt::AlignTop);
 
         QHBoxLayout *hLayout = new QHBoxLayout();
-
-        QLabel *label = new QLabel(tr("Auto Follow Redirects"), this);
+        QLabel *autoFollowRedirectsLabel = new QLabel(tr("Auto Follow Redirects"), this);
         QCheckBox *autoFollowRedirectsCheckBox = new QCheckBox(this);
-        QSpacerItem *spacer = new QSpacerItem(20, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
         autoFollowRedirectsCheckBox->setChecked(settings->getAutoFollowRedirects());
-        connect(autoFollowRedirectsCheckBox, &QCheckBox::stateChanged, this, &ApiSettings::handleFollowAutoRedirectsChanged);
-        hLayout->addWidget(label);
+        connect(autoFollowRedirectsCheckBox, &QCheckBox::stateChanged, this, &ApiSettings::handleAutoFollowRedirectsChanged);
+        QSpacerItem *spacer = new QSpacerItem(20, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
+        hLayout->addWidget(autoFollowRedirectsLabel);
         hLayout->addItem(spacer);
         hLayout->addWidget(autoFollowRedirectsCheckBox);
+        mainLayout->addLayout(hLayout);
 
+        hLayout = new QHBoxLayout();
+        QLabel *enableSslVerificationLabel = new QLabel(tr("Enable SSL verfication"), this);
+        QCheckBox *enableSslVerificationCheckBox = new QCheckBox(this);
+        enableSslVerificationCheckBox->setChecked(settings->getEnableSslVerification());
+        connect(enableSslVerificationCheckBox, &QCheckBox::stateChanged, this, &ApiSettings::handleEnableSslVerificationChanged);
+        spacer = new QSpacerItem(20, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
+        hLayout->addWidget(enableSslVerificationLabel);
+        hLayout->addItem(spacer);
+        hLayout->addWidget(enableSslVerificationCheckBox);
         mainLayout->addLayout(hLayout);
 
         setLayout(mainLayout);
@@ -52,8 +61,13 @@ namespace Ui
     {
     }
 
-    void ApiSettings::handleFollowAutoRedirectsChanged(bool checked)
+    void ApiSettings::handleAutoFollowRedirectsChanged(bool checked)
     {
         settings->setAutoFollowRedirects(checked);
+    }
+
+    void ApiSettings::handleEnableSslVerificationChanged(bool checked)
+    {
+        settings->setEnableSslVerification(checked);
     }
 } // namespace Ui
