@@ -16,29 +16,29 @@
  * along with Kitty. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "./settings.hpp"
-#include <QVBoxLayout>
-#include <QTabWidget>
-#include <QLabel>
-#include "widgets/apiSettings.hpp"
-#include "persistence/apiSettings.hpp"
+#pragma once
+
+#include <QWidget>
+
+namespace Persistence
+{
+    class ApiSettings;
+} // namespace Persistence
 
 namespace Ui
 {
-    Settings::Settings(QWidget *parent)
-        : QWidget(parent)
+    class ApiSettings : public QWidget
     {
-        QVBoxLayout *mainLayout = new QVBoxLayout();
+        Q_OBJECT
 
-        QTabWidget *tabWidget = new QTabWidget(this);
-        ApiSettings *apiSettings = new ApiSettings(Persistence::ApiSettings::getInstance(), this);
-        tabWidget->addTab(apiSettings, tr("Api"));
+    public:
+        explicit ApiSettings(Persistence::ApiSettings *settings, QWidget *parent = nullptr);
+        ~ApiSettings();
 
-        mainLayout->addWidget(tabWidget);
-        setLayout(mainLayout);
-    }
+    private slots:
+        void handleFollowAutoRedirectsChanged(bool checked);
 
-    Settings::~Settings()
-    {
-    }
+    private:
+        Persistence::ApiSettings *settings;
+    };
 } // namespace Ui

@@ -73,6 +73,8 @@ set(SOURCES
         widgets/histories.cpp
         widgets/settings.hpp
         widgets/settings.cpp
+        widgets/apiSettings.hpp
+        widgets/apiSettings.cpp
         models/language.hpp
         models/language.cpp
         models/project.hpp
@@ -122,6 +124,8 @@ set(SOURCES
         persistence/project.cpp
         persistence/settings.hpp
         persistence/settings.cpp
+        persistence/apiSettings.hpp
+        persistence/apiSettings.cpp
         events/bus.hpp
         events/bus.cpp
         utils/utils.hpp
