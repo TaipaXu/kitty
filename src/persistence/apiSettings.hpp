@@ -36,6 +36,13 @@ namespace Persistence
         Q_OBJECT
 
     public:
+        enum class ProxyType
+        {
+            NoProxy,
+            Proxy
+        };
+
+    public:
         static ApiSettings *getInstance();
         ApiSettings(const ApiSettings &) = delete;
         ApiSettings &operator=(const ApiSettings &) = delete;
@@ -48,6 +55,10 @@ namespace Persistence
         void setEnableSslVerification(bool enableSslVerification);
         int getTimeout() const;
         void setTimeout(int timeout);
+        ProxyType getProxyType() const;
+        QString getProxyStr() const;
+        void setNoProxy();
+        void setProxy(const QString &proxyStr);
 
     private:
         ApiSettings();
@@ -58,5 +69,7 @@ namespace Persistence
         bool autoFollowRedirects;
         bool enableSslVerification;
         int timeout;
+        ProxyType proxyType;
+        QString proxyStr;
     };
 } // namespace Persistence

@@ -22,6 +22,8 @@
 #include <QTabWidget>
 #include <QLabel>
 #include <QCheckBox>
+#include <QButtonGroup>
+#include <QRadioButton>
 #include <QLineEdit>
 #include <QIntValidator>
 #include "persistence/apiSettings.hpp"
@@ -69,6 +71,35 @@ namespace Ui
         hLayout->addWidget(timeoutInput);
         mainLayout->addLayout(hLayout);
 
+        hLayout = new QHBoxLayout();
+        QButtonGroup *proxyButtons = new QButtonGroup(this);
+        noProxyRadio = new QRadioButton(tr("No Proxy"), this);
+        proxyRadio = new QRadioButton(tr("Proxy"), this);
+        // proxyRadio->setChecked(settings->getProxyType() == Persistence::ApiSettings::ProxyType::PROXY);
+        // noProxyRadio->setChecked(settings->getProxyType() == Persistence::ApiSettings::ProxyType::NO_PROXY);
+        proxyButtons->addButton(noProxyRadio, 0);
+        proxyButtons->addButton(proxyRadio, 1);
+        hLayout->addWidget(noProxyRadio);
+        hLayout->addWidget(proxyRadio);
+        spacer = new QSpacerItem(20, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
+        hLayout->addItem(spacer);
+        proxyInput = new QLineEdit(this);
+        mainLayout->addLayout(hLayout);
+        Persistence::ApiSettings::ProxyType proxyType = settings->getProxyType();
+        if (proxyType == Persistence::ApiSettings::ProxyType::Proxy)
+        {
+            proxyRadio->setChecked(true);
+            proxyInput->setText(settings->getProxyStr());
+        }
+        else
+        {
+            noProxyRadio->setChecked(true);
+            proxyInput->hide();
+        }
+        connect(proxyButtons, &QButtonGroup::buttonToggled, this, &ApiSettings::handlePorxyButtonToggled);
+        connect(proxyInput, &QLineEdit::textChanged, this, &ApiSettings::handleProxyStrChanged);
+        mainLayout->addWidget(proxyInput);
+
         setLayout(mainLayout);
     }
 
@@ -89,5 +120,24 @@ namespace Ui
     void ApiSettings::handleTimeoutChanged(const QString &text)
     {
         settings->setTimeout(text.toInt());
+    }
+
+    void ApiSettings::handlePorxyButtonToggled(QAbstractButton *button, bool checked) const
+    {
+        if (button == noProxyRadio)
+        {
+            settings->setNoProxy();
+            proxyInput->hide();
+        }
+        else if (button == proxyRadio)
+        {
+            settings->setProxy(proxyInput->text());
+            proxyInput->show();
+        }
+    }
+
+    void ApiSettings::handleProxyStrChanged(const QString &text)
+    {
+        settings->setProxy(text);
     }
 } // namespace Ui

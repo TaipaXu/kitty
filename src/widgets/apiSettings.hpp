@@ -20,6 +20,12 @@
 
 #include <QWidget>
 
+QT_BEGIN_NAMESPACE
+class QAbstractButton;
+class QRadioButton;
+class QLineEdit;
+QT_END_NAMESPACE
+
 namespace Persistence
 {
     class ApiSettings;
@@ -39,8 +45,13 @@ namespace Ui
         void handleAutoFollowRedirectsChanged(bool checked);
         void handleEnableSslVerificationChanged(bool checked);
         void handleTimeoutChanged(const QString &text);
+        void handlePorxyButtonToggled(QAbstractButton *button, bool checked) const;
+        void handleProxyStrChanged(const QString &text);
 
     private:
         Persistence::ApiSettings *settings;
+        QRadioButton *noProxyRadio;
+        QRadioButton *proxyRadio;
+        QLineEdit *proxyInput;
     };
 } // namespace Ui

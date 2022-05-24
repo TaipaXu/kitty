@@ -90,6 +90,10 @@ void Network::request(Model::Api *api)
     curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, apiSettings->getAutoFollowRedirects() ? 1L : 0L);
     curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, apiSettings->getEnableSslVerification() ? 1L : 0L);
     curl_easy_setopt(curl, CURLOPT_TIMEOUT, apiSettings->getTimeout());
+    if (apiSettings->getProxyType() == Persistence::ApiSettings::ProxyType::Proxy)
+    {
+        curl_easy_setopt(curl, CURLOPT_PROXY, apiSettings->getProxyStr().toStdString().c_str());
+    }
 
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, receiveData);
     std::string responseHeadersStr;

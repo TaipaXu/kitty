@@ -67,10 +67,36 @@ namespace Persistence
         settings->setValue("timeout", timeout);
     }
 
+    ApiSettings::ProxyType ApiSettings::getProxyType() const
+    {
+        return proxyType;
+    }
+
+    QString ApiSettings::getProxyStr() const
+    {
+        return proxyStr;
+    }
+
+    void ApiSettings::setNoProxy()
+    {
+        proxyType = ProxyType::NoProxy;
+        settings->setValue("proxyType", static_cast<int>(proxyType));
+    }
+
+    void ApiSettings::setProxy(const QString &proxyStr)
+    {
+        proxyType = ProxyType::Proxy;
+        this->proxyStr = proxyStr;
+        settings->setValue("proxyType", static_cast<int>(proxyType));
+        settings->setValue("proxyStr", proxyStr);
+    }
+
     void ApiSettings::readSettings()
     {
         autoFollowRedirects = settings->value("autoFollowRedirects", true).toBool();
         enableSslVerification = settings->value("enableSslVerification", true).toBool();
         timeout = settings->value("timeout", 50).toInt();
+        proxyType = static_cast<ProxyType>(settings->value("proxyType", static_cast<int>(proxyType)).toInt());
+        proxyStr = settings->value("proxyStr", "").toString();
     }
 } // namespace Persistence
