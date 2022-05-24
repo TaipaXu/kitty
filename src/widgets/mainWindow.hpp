@@ -72,6 +72,7 @@ namespace Ui
         void changeNav(int index);
         void changeTab(int index);
         void changeTab();
+        void toggleFullscreen();
         void aboutToClose();
         void handleAboutActionTriggered();
         void handleReportBugActionTriggered();

@@ -250,6 +250,18 @@ namespace Ui
         }
     }
 
+    void MainWindow::toggleFullscreen()
+    {
+        if (!isFullScreen())
+        {
+            showFullScreen();
+        }
+        else
+        {
+            showNormal();
+        }
+    }
+
     void MainWindow::aboutToClose()
     {
     }
@@ -355,5 +367,10 @@ namespace Ui
         shortcut->setKey(Qt::CTRL + Qt::Key_S);
         shortcut->setAutoRepeat(false);
         connect(shortcut, &QShortcut::activated, this, &MainWindow::saveCurrentApi);
+
+        shortcut = new QShortcut(this);
+        shortcut->setKey(QKeySequence::FullScreen);
+        shortcut->setAutoRepeat(false);
+        connect(shortcut, &QShortcut::activated, this, &MainWindow::toggleFullscreen);
     }
 } // namespace Ui
