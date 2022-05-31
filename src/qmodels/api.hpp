@@ -39,7 +39,7 @@ namespace QModel
         Q_OBJECT
 
     public:
-        explicit Api(QObject *parent = nullptr);
+        explicit Api(Model::Project *project, QObject *parent = nullptr);
         ~Api();
 
         int rowCount(const QModelIndex &parent = QModelIndex()) const override;
@@ -48,9 +48,16 @@ namespace QModel
         QModelIndex parent(const QModelIndex &index) const override;
         QVariant data(const QModelIndex &index, int role) const override;
 
+        Qt::ItemFlags flags(const QModelIndex &index) const override;
+        QStringList mimeTypes() const override;
+        QMimeData *mimeData(const QModelIndexList &indexes) const override;
+        Qt::DropActions supportedDragActions() const override;
+        Qt::DropActions supportedDropActions() const override;
+        bool canDropMimeData(const QMimeData *data, Qt::DropAction action, int row, int column, const QModelIndex &parent) const override;
+        bool dropMimeData(const QMimeData *data, Qt::DropAction action, int row, int column, const QModelIndex &parent) override;
+
         QModel::ApiItem *getItem(const QModelIndex &index) const;
         Model::Project *getProject() const;
-        void setProject(Model::Project *project);
         Model::Group *getGroup(const QModelIndex &index) const;
         Model::Api *getApi(const QModelIndex &index) const;
         QModelIndex getIndex(Model::Group *group);
@@ -66,5 +73,7 @@ namespace QModel
     private:
         QModel::ApiItem *item;
         Model::Project *project;
+        static const QString groupMimeType;
+        static const QString apiMimeType;
     };
 } // namespace QModel

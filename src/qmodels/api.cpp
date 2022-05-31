@@ -17,17 +17,31 @@
  */
 
 #include "./api.hpp"
+#include <QMimeData>
 #include "models/project.hpp"
 #include "models/group.hpp"
 #include "models/api.hpp"
 
 namespace QModel
 {
-    Api::Api(QObject *parent)
+    const QString Api::groupMimeType("application/kitty-group");
+    const QString Api::apiMimeType("application/kitty-api");
+
+    Api::Api(Model::Project *project, QObject *parent)
         : QAbstractItemModel(parent),
-          item{new QModel::ApiItem("root", "root")},
-          project{nullptr}
+          project{project}
     {
+        beginResetModel();
+        item = new QModel::ApiItem(QString("root"), QString("root"));
+        for (auto &&group : project->getGroups())
+        {
+            QModel::ApiItem *groupItem = new QModel::ApiItem(group->getName(), group->getId(), item);
+            for (auto &&api : group->getApis())
+            {
+                QModel::ApiItem *apiItem = new QModel::ApiItem(api->getName(), api->getId(), groupItem);
+            }
+        }
+        endResetModel();
     }
 
     Api::~Api()
@@ -50,7 +64,7 @@ namespace QModel
         }
         else
         {
-            parentItem = static_cast<QModel::ApiItem *>(parent.internalPointer());
+            parentItem = getItem(parent);
         }
 
         return parentItem->children.size();
@@ -75,18 +89,12 @@ namespace QModel
         }
         else
         {
-            parentItem = static_cast<QModel::ApiItem *>(parent.internalPointer());
+            parentItem = getItem(parent);
         }
 
-        QModel::ApiItem *childItem = parentItem->children.at(row);
-        if (childItem)
-        {
-            return createIndex(row, column, childItem);
-        }
-        else
-        {
-            return QModelIndex();
-        }
+        auto childItem = parentItem->children.begin();
+        std::advance(childItem, row);
+        return createIndex(row, column, *childItem);
     }
 
     QModelIndex Api::parent(const QModelIndex &index) const
@@ -96,21 +104,18 @@ namespace QModel
             return QModelIndex();
         }
 
-        QModel::ApiItem *childItem = static_cast<QModel::ApiItem *>(index.internalPointer());
+        QModel::ApiItem *childItem = getItem(index);
         QModel::ApiItem *parentItem = childItem->parent;
-        if (parentItem == item)
+        if (parentItem == nullptr)
         {
             return QModelIndex();
         }
-
-        int row = 0;
-        if (parentItem->parent)
+        else
         {
-            auto it = std::find(parentItem->parent->children.begin(), parentItem->parent->children.end(), parentItem);
-            row = std::distance(parentItem->parent->children.begin(), it);
+            auto it = std::find(parentItem->children.begin(), parentItem->children.end(), childItem);
+            const int row = std::distance(parentItem->children.begin(), it);
+            return createIndex(row, 0, parentItem);
         }
-
-        return createIndex(row, 0, parentItem);
     }
 
     QVariant Api::data(const QModelIndex &index, int role) const
@@ -125,7 +130,7 @@ namespace QModel
             return QVariant();
         }
 
-        QModel::ApiItem *item = static_cast<QModel::ApiItem *>(index.internalPointer());
+        QModel::ApiItem *item = getItem(index);
         return item->name;
     }
 
@@ -139,62 +144,52 @@ namespace QModel
         return project;
     }
 
-    void Api::setProject(Model::Project *project)
-    {
-        this->project = project;
-        beginResetModel();
-        item = new QModel::ApiItem(QString("root"), QString("root"));
-        for (auto &&group : project->getGroups())
-        {
-            QModel::ApiItem *groupItem = new QModel::ApiItem(group->getName(), group->getId(), item);
-            for (auto &&api : group->getApis())
-            {
-                QModel::ApiItem *apiItem = new QModel::ApiItem(api->getName(), api->getId(), groupItem);
-            }
-        }
-        endResetModel();
-    }
-
     Model::Group *Api::getGroup(const QModelIndex &index) const
     {
-        QModel::ApiItem *item = static_cast<QModel::ApiItem *>(index.internalPointer());
-        for (auto &&group : project->getGroups())
-        {
-            if (item->id == group->getId())
-            {
-                return group;
-            }
-        }
+        QModel::ApiItem *item = getItem(index);
+        std::list<Model::Group *> groups = project->getGroups();
+        auto it = std::find_if(groups.begin(), groups.end(), [item](Model::Group *group) {
+            return group->getId() == item->id;
+        });
+        return it == groups.end() ? nullptr : *it;
     }
 
     Model::Api *Api::getApi(const QModelIndex &index) const
     {
-        QModel::ApiItem *item = static_cast<QModel::ApiItem *>(index.internalPointer());
-        for (auto &&group : project->getGroups())
+        QModel::ApiItem *item = getItem(index);
+        std::list<Model::Group *> groups = project->getGroups();
+        for (auto &&group : groups)
         {
-            for (auto &&api : group->getApis())
+            std::list<Model::Api *> apis = group->getApis();
+            auto it = std::find_if(apis.begin(), apis.end(), [item](Model::Api *api) {
+                return api->getId() == item->id;
+            });
+            if (it != apis.end())
             {
-                if (item->id == api->getId())
-                {
-                    return api;
-                }
+                return *it;
             }
         }
+        return nullptr;
+
+        // QModel::ApiItem *item = getItem(index);
+        // for (auto &&group : project->getGroups())
+        // {
+        //     for (auto &&api : group->getApis())
+        //     {
+        //         if (item->id == api->getId())
+        //         {
+        //             return api;
+        //         }
+        //     }
+        // }
     }
 
     QModelIndex Api::getIndex(Model::Group *group)
     {
-        int groupIndex = 0;
-        for (auto &&group2 : project->getGroups())
-        {
-            if (group = group2)
-            {
-                return index(groupIndex, 0);
-            }
-            groupIndex++;
-        }
-
-        return QModelIndex();
+        auto it = std::find_if(item->children.begin(), item->children.end(), [group](QModel::ApiItem *item) {
+            return item->id == group->getId();
+        });
+        return it == item->children.end() ? QModelIndex() : index(std::distance(item->children.begin(), it), 0);
     }
 
     QModelIndex Api::getIndex(Model::Api *api)
@@ -266,5 +261,186 @@ namespace QModel
     void Api::rename(Model::Api *api, const QString &name)
     {
         item->rename(api, name);
+    }
+
+    Qt::ItemFlags Api::flags(const QModelIndex &index) const
+    {
+        if (!index.isValid())
+        {
+            return Qt::ItemIsDropEnabled | QAbstractItemModel::flags(index);
+        }
+
+        return Qt::ItemIsDragEnabled | Qt::ItemIsDropEnabled | QAbstractItemModel::flags(index);
+    }
+
+    QStringList Api::mimeTypes() const
+    {
+        return {groupMimeType, apiMimeType};
+    }
+
+    QMimeData *Api::mimeData(const QModelIndexList &indexes) const
+    {
+        if (indexes.size() < 1)
+        {
+            return nullptr;
+        }
+
+        QMimeData *mimeData = new QMimeData();
+        const QModelIndex index = indexes.at(0);
+        const QModel::ApiItem *item = getItem(index);
+        if (item->type == QString("group"))
+        {
+            Model::Group *group = getGroup(index);
+            mimeData->setData(groupMimeType, group->getId().toUtf8());
+        }
+        else if (item->type == QString("api"))
+        {
+            Model::Api *api = getApi(index);
+            mimeData->setData(apiMimeType, api->getId().toUtf8());
+        }
+
+        return mimeData;
+    }
+
+    Qt::DropActions Api::supportedDragActions() const
+    {
+        return Qt::MoveAction;
+    }
+
+    Qt::DropActions Api::supportedDropActions() const
+    {
+        return Qt::MoveAction;
+    }
+
+    bool Api::canDropMimeData(const QMimeData *data, Qt::DropAction action, int row, int column, const QModelIndex &parent) const
+    {
+        if (!data)
+        {
+            return false;
+        }
+
+        if (data->hasFormat(groupMimeType))
+        {
+            if (row == parent.row() && !parent.parent().isValid())
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+        else if (data->hasFormat(apiMimeType))
+        {
+            if (!index(row, column, parent).isValid() && parent.isValid() || row == parent.row() && parent.isValid())
+            {
+                QModel::ApiItem *item = getItem(parent);
+                if (item->type == "group")
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                return false;
+            }
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    bool Api::dropMimeData(const QMimeData *data, Qt::DropAction action, int row, int column, const QModelIndex &parent)
+    {
+        if (!data)
+        {
+            return false;
+        }
+
+        if (data->hasFormat(groupMimeType))
+        {
+            if (row == parent.row())
+            {
+                const QString fromGroupId = data->data(groupMimeType);
+                int fromIndex = 0;
+                std::list<ApiItem *> &groups = item->children;
+                auto fromIt = std::find_if(groups.begin(), groups.end(), [fromGroupId](ApiItem *item) {
+                    return item->id == fromGroupId;
+                });
+                fromIndex = std::distance(groups.begin(), fromIt);
+                if (fromIndex == row - 1)
+                {
+                    return false;
+                }
+                auto toIt = groups.begin();
+                std::advance(toIt, row);
+                beginMoveRows(QModelIndex(), fromIndex, fromIndex, QModelIndex(), row);
+                groups.splice(toIt, groups, fromIt);
+                endMoveRows();
+
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+        else if (data->hasFormat(apiMimeType))
+        {
+            if (parent.isValid() && (!index(row, column, parent).isValid() || row == parent.row()))
+            {
+                QModel::ApiItem *item = getItem(parent);
+                if (item->type == "group")
+                {
+                    const QString fromApiId = data->data(apiMimeType);
+                    int fromGroupIndex = 0;
+                    int fromApiIndex = 0;
+                    for (auto &&group : this->item->children)
+                    {
+                        bool found = false;
+                        fromApiIndex = 0;
+                        for (auto &&api : group->children)
+                        {
+                            if (api->id == fromApiId)
+                            {
+                                found = true;
+                                break;
+                            }
+                            fromApiIndex++;
+                        }
+                        if (found)
+                        {
+                            break;
+                        }
+                        fromGroupIndex++;
+                    }
+                    auto itGroupFrom = this->item->children.begin();
+                    std::advance(itGroupFrom, fromGroupIndex);
+                    auto itApiFrom = (*itGroupFrom)->children.begin();
+                    std::advance(itApiFrom, fromApiIndex);
+                    const int toGroupIndex = parent.parent().row();
+                    const int toApiIndex = row;
+                    auto itGroupTo = this->item->children.begin();
+                    std::advance(itGroupTo, toGroupIndex);
+                    auto itApiTo = (*itGroupTo)->children.begin();
+                    std::advance(itApiTo, toApiIndex);
+
+                    beginMoveRows(index(fromGroupIndex, 0, QModelIndex()), fromApiIndex, fromApiIndex, index(parent.parent().row(), 0, QModelIndex()), toApiIndex);
+                    (*itGroupTo)->children.splice((*itGroupTo)->children.end(), (*itGroupFrom)->children, itApiFrom);
+                    (*itApiFrom)->parent = *itGroupTo;
+                    endMoveRows();
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+        }
     }
 } // namespace QModel

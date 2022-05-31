@@ -20,6 +20,7 @@
 #include "models/project.hpp"
 #include "models/group.hpp"
 #include "models/api.hpp"
+#include <QtDebug>
 
 namespace QModel
 {
@@ -30,6 +31,7 @@ namespace QModel
     {
         if (parent)
         {
+            this->parent = parent;
             parent->children.push_back(this);
             if (parent->name == QStringLiteral("root"))
             {
@@ -39,6 +41,10 @@ namespace QModel
             {
                 type = QStringLiteral("api");
             }
+        }
+        else
+        {
+            type = QStringLiteral("root");
         }
     }
 

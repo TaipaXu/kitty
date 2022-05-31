@@ -19,7 +19,7 @@
 #pragma once
 
 #include <QString>
-#include <vector>
+#include <list>
 
 namespace Model
 {
@@ -50,6 +50,6 @@ namespace QModel
         QString name;
         QString id;
         ApiItem *parent;
-        std::vector<ApiItem *> children;
+        std::list<ApiItem *> children;
     };
 } // namespace QModel

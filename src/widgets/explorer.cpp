@@ -97,12 +97,15 @@ namespace Ui
             tree->setContextMenuPolicy(Qt::CustomContextMenu);
             tree->setSelectionBehavior(QAbstractItemView::SelectRows);
             tree->setSelectionMode(QAbstractItemView::SingleSelection);
+            tree->setDragEnabled(true);
+            tree->setAcceptDrops(true);
+            // tree->setDragDropMode(QAbstractItemView::InternalMove);
+            // tree->setDropIndicatorShown(true);
             connect(tree, &QTreeView::customContextMenuRequested, [tree, this](const QPoint &pos) {
                 handleTreeContextMenu(tree, pos);
             });
 
-            QModel::Api *qmodel = new QModel::Api(this);
-            qmodel->setProject(project);
+            QModel::Api *qmodel = new QModel::Api(project, this);
             tree->setModel(qmodel);
             connect(tree->selectionModel(), &QItemSelectionModel::currentChanged, this, &Explorer::handleTreeCurrentChanged);
 
